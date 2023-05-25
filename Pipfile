@@ -9,8 +9,7 @@ uvicorn = "0.22.0"
 pipenv = "2023.4.29"
 requests = "2.30.0"
 pymongo = "3.11.1"
-motor = "*"
-mypy = "*"
+motor = "3.1.2"
 
 [dev-packages]
 pre-commit = "3.3.1"

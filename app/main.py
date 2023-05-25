@@ -1,24 +1,23 @@
+from app.config import Config
+from app.db import DBConnection
 from app.utilities import get_token
 from app.models import ServiceModel, ServiceUpdateModel
 
-from fastapi import FastAPI, HTTPException, status
+import uvicorn
+import requests
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
-import requests
-import uvicorn
+from fastapi import FastAPI, HTTPException, status
 
 from pymongo.errors import (
     ConnectionFailure,
     ExecutionTimeout
 )
-import os
-import motor.motor_asyncio
-
-client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGODB_URL"])
-db = client.business
 
 
+conf = Config()
 app = FastAPI()
+db_conn = DBConnection(conf.mongodb_url)
 BASE_URL = "https://developers.syscom.mx/api/v1/"
 
 
@@ -34,8 +33,29 @@ async def search_product(category: str, brand: str, word_to_search: str):
 
 
 @app.get("/api/v1/services")
-async def search_service(service: str):
-    pass
+async def search_service_by_name(service_name: str):
+    services_get = await db_conn.db["services"].find(
+        {
+            "description": {
+                "$regex": service_name,
+                "$options": "mxsi"
+                }
+            }
+    ).to_list(1000)
+    return services_get
+
+
+@app.get("/api/v1/services")
+async def search_service_by_description(service_description: str):
+    services_get = await db_conn.db["services"].find(
+        {
+            "description": {
+                "$regex": service_description,
+                "$options": "mxsi"
+                }
+            }
+    ).to_list(1000)
+    return services_get
 
 
 @app.post(
@@ -45,7 +65,7 @@ async def search_service(service: str):
 async def create_service(service: ServiceModel):
     service = jsonable_encoder(service)
     try:
-        await db["service"].insert_one(service)
+        await db_conn.db["services"].insert_one(service)
     except (ConnectionFailure, ExecutionTimeout):
         HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
