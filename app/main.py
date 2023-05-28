@@ -18,13 +18,12 @@ from pymongo.errors import (
 conf = Config()
 app = FastAPI()
 db_conn = DBConnection(conf.mongodb_url)
-BASE_URL = "https://developers.syscom.mx/api/v1/"
 
 
 @app.get("/api/v1/products")
 async def search_product(category: str, brand: str, word_to_search: str):
     token = get_token()
-    URL = f"{BASE_URL}?categoria={category}&marca={brand}&busqueda={word_to_search}"  # noqa
+    URL = f"{conf.syscom_api_url}?categoria={category}&marca={brand}&busqueda={word_to_search}"  # noqa
     autorization_header = {
         "Authorization": f"Bearer {token}"
     }
@@ -34,27 +33,39 @@ async def search_product(category: str, brand: str, word_to_search: str):
 
 @app.get("/api/v1/services")
 async def search_service_by_name(service_name: str):
-    services_get = await db_conn.db["services"].find(
-        {
-            "description": {
-                "$regex": service_name,
-                "$options": "mxsi"
+    try:
+        services_get = await db_conn.db["services"].find(
+            {
+                "name": {
+                    "$regex": service_name,
+                    "$options": "mxsi"
+                    }
                 }
-            }
-    ).to_list(1000)
+        ).to_list(1000)
+    except (ConnectionFailure, ExecutionTimeout):
+        HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not find the service"
+        )
     return services_get
 
 
-@app.get("/api/v1/services")
+@app.get("/api/v1/services/description")
 async def search_service_by_description(service_description: str):
-    services_get = await db_conn.db["services"].find(
-        {
-            "description": {
-                "$regex": service_description,
-                "$options": "mxsi"
+    try:
+        services_get = await db_conn.db["services"].find(
+            {
+                "description": {
+                    "$regex": service_description,
+                    "$options": "mxsi"
+                    }
                 }
-            }
-    ).to_list(1000)
+        ).to_list(1000)
+    except (ConnectionFailure, ExecutionTimeout):
+        HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not find the service description"
+        )
     return services_get
 
 
