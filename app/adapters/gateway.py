@@ -1,4 +1,5 @@
 from typing import Any, List
+from dataclasses import dataclass
 
 from app.entities.models import (
     ServiceModel,
@@ -9,12 +10,14 @@ from app.entities.models import (
 from app.config import Config
 from app.adapters.gateway_i import GatewayInterface
 from app.infrastructure.repository_i import RepositoryInterface
+from pydantic import BaseSettings
 
 
+@dataclass
 class Gateway(GatewayInterface):
 
     repository: RepositoryInterface
-    conf: Config()
+    conf: BaseSettings = Config()
 
     async def get_service(self, service_id: int) -> ServiceModel:
         return await self.repository.get_service_data(service_id)

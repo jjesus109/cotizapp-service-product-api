@@ -75,21 +75,21 @@ class Repository(RepositoryInterface):
             log.error(f"Could not get data from third party endpoint: {e}")
             raise ElementNotFoundError("Could not get product search data")
         raw_data = response.json()
-        return raw_data
+        return raw_data.get("productos")
 
     async def search_services_by_name(
         self,
         service_name: str
     ) -> List[ServiceModel]:
         try:
-            services_get = await self.nosql_conn.db["services"].find(
+            services_get = await self.nosql_conn["services"].find(
                 {
                     "name": {
                         "$regex": service_name,
                         "$options": "mxsi"
                     }
                 }
-            ).to_list()
+            ).to_list(config.max_search_elements)
         except (ConnectionFailure, ExecutionTimeout):
             raise ElementNotFoundError(
                 "Could not found service in DB"
@@ -101,14 +101,14 @@ class Repository(RepositoryInterface):
         service_description: str
     ) -> List[ServiceModel]:
         try:
-            services_get = await self.nosql_conn.db["services"].find(
+            services_get = await self.nosql_conn["services"].find(
                 {
                     "description": {
                         "$regex": service_description,
                         "$options": "mxsi"
                     }
                 }
-            ).to_list()
+            ).to_list(config.max_search_elements)
         except (ConnectionFailure, ExecutionTimeout):
             raise ElementNotFoundError(
                 "Could not found service in DB"
@@ -118,7 +118,7 @@ class Repository(RepositoryInterface):
     async def create_service(self, service: ServiceModel) -> Any:
         service = jsonable_encoder(service)
         try:
-            await self.nosql_conn.db["services"].insert_one(service)
+            await self.nosql_conn["services"].insert_one(service)
         except (ConnectionFailure, ExecutionTimeout):
             raise InsertionError("Could not insert service in DB")
         return service
@@ -160,7 +160,7 @@ class Repository(RepositoryInterface):
 
         """
 
-    async def _get_token() -> str:
+    async def _get_token(self) -> str:
         headers = {
             "Content-Type": "application/x-www-form-urlencoded"
         }
