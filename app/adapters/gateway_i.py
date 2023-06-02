@@ -2,21 +2,21 @@ from typing import Any, List
 from abc import ABC, abstractmethod
 
 
-class RepositoryInterface(ABC):
+class GatewayInterface(ABC):
 
     @abstractmethod
-    async def get_service_data(self, service_id: int) -> Any:
-        """_summary_
+    async def get_service(self, service_id: int) -> Any:
+        """Get service data
 
         Args:
             service_id (int): id to get data about the service
 
         Returns:
-            Any: Service data got
+            Any: Service data got+ get_service(service_id: Int): <T>
         """
 
     @abstractmethod
-    async def get_product_data(self, product_id: int) -> Any:
+    async def get_product(self, product_id: int) -> Any:
         """Get information about a product
 
         Args:
@@ -27,7 +27,7 @@ class RepositoryInterface(ABC):
         """
 
     @abstractmethod
-    async def search_products(self, word: str) -> List[Any]:
+    async def search_product(self, word: str) -> List[Any]:
         """Word to search into product catalog
 
         Args:
@@ -64,52 +64,24 @@ class RepositoryInterface(ABC):
 
     @abstractmethod
     async def create_service(self, service: Any) -> Any:
-        """Create service in DB
+        """Create a new service in DB
+
+        Args:
+            service (Any): service to create
+            strategy (Strategy): strategy to execute in updating
+
+        Returns:
+            Any: service created
+        """
+
+    @abstractmethod
+    async def modify_service(self, service: Any) -> Any:
+        """Update an existing service
 
         Args:
             service (Any): service to update
+            strategy (Strategy): strategy to execute in updating
 
         Returns:
-            Any: Service updated
-        """
-
-    @abstractmethod
-    async def update_service(self, service: Any) -> Any:
-        """Update service in DB
-
-        Args:
-            service (Any): service to update
-
-        Returns:
-            Any: Service updated
-        """
-
-    @abstractmethod
-    async def notify_service(self, service: Any):
-        """Notification about a service changes in
-        messaging system
-
-        Args:
-            service (Any): Service to notify
-
-        """
-
-    @abstractmethod
-    async def notify_service_updated(self, service: Any):
-        """Notification about a updating in service changes in
-        messaging system
-
-        Args:
-            service (Any): Service to notify in changes
-
-        """
-
-    @abstractmethod
-    async def notify_product(self, product: Any):
-        """Notification about a product changes in
-        messaging system
-
-        Args:
-            product (Any): Product to notify
-
+            Any: Service modified
         """

@@ -3,12 +3,17 @@ from typing import List, Any
 from dataclasses import dataclass
 
 from app.config import Config
-from app.errors import ElementNotFoundError, TokenError
-from app.entities.models import ServiceModel, ProductResponseSearchModel
+from app.errors import ElementNotFoundError, TokenError, InsertionError
+from app.entities.models import (
+    ServiceModel,
+    ServiceUpdateModel,
+    ProductResponseSearchModel,
+)
 from app.infrastructure.repository_i import RepositoryInterface
 
 import requests
 from confluent_kafka import Producer
+from fastapi.encoders import jsonable_encoder
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import (
     ConnectionFailure,
@@ -110,6 +115,14 @@ class Repository(RepositoryInterface):
             )
         return services_get
 
+    async def create_service(self, service: ServiceModel) -> Any:
+        service = jsonable_encoder(service)
+        try:
+            await self.nosql_conn.db["services"].insert_one(service)
+        except (ConnectionFailure, ExecutionTimeout):
+            raise InsertionError("Could not insert service in DB")
+        return service
+
     async def update_service(self, service: Any) -> Any:
         """Update service in DB
 
@@ -120,7 +133,7 @@ class Repository(RepositoryInterface):
             Any: Service updated
         """
 
-    async def notify_service(self, service: Any):
+    async def notify_service(self, service: ServiceModel):
         """Notification about a service changes in
         messaging system
 
@@ -135,6 +148,15 @@ class Repository(RepositoryInterface):
 
         Args:
             product (Any): Product to notify
+
+        """
+
+    async def notify_service_updated(self, service: ServiceUpdateModel):
+        """Notification about a updating in service changes in
+        messaging system
+
+        Args:
+            service (Any): Service to notify in changes
 
         """
 

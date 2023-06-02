@@ -7,3 +7,4 @@ class Config(BaseSettings):
     client_id: str
     client_secret: str
     mongodb_url: str
+    stream_consume: bool

@@ -8,3 +8,7 @@ class DBConnectionError(Exception):
 
 class ElementNotFoundError(Exception):
     """When element not found in DB"""
+
+
+class InsertionError(Exception):
+    """When there was a problem while inserting a DB"""
