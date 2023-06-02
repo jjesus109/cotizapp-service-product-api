@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, TypedDict
 
 from pydantic import BaseModel, Field
 from bson import ObjectId
@@ -18,12 +18,6 @@ class PyObjectId(ObjectId):
     @classmethod
     def __modify_schema__(cls, field_schema):
         field_schema.update(type="string")
-
-
-class SearchParams(BaseModel):
-    category: str
-    brand: str
-    word_to_search: str
 
 
 class ServiceModel(BaseModel):
@@ -64,3 +58,53 @@ class ServiceUpdateModel(BaseModel):
                 "real_price": 180
             }
         }
+
+
+class ProductModel(BaseModel):
+    title: str
+    list_price: float
+    discount_price: float
+    image: str
+    stock_number: int
+    brand: str
+    product_id: int
+    model: str
+    sat_key: int
+    weight: float
+
+
+class ExistenceModel(TypedDict):
+    nuevo: int
+    asterisco: dict
+
+
+class PreciosModel(TypedDict):
+    precio_1: float
+    precio_especial: float
+    precio_descuento: float
+    precio_lista: float
+
+
+class ProductResponseSearchModel(TypedDict):
+    producto_id: int
+    modelo: str
+    total_existencia: int
+    titulo: str
+    marca: str
+    sat_key: int
+    img_portada: str
+    link_privado: str
+    categorias: list
+    pvol: float
+    marca_logo: str
+    link: str
+    iconos: list
+    peso: float
+    existencia: ExistenceModel
+    unidad_de_medida: dict
+    alto: int
+    largo: int
+    ancho: int
+    precios: PreciosModel
+    pagina: int
+    paginas: int

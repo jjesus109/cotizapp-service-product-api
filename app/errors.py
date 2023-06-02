@@ -4,3 +4,7 @@ class TokenError(Exception):
 
 class DBConnectionError(Exception):
     """When could not connect to database"""
+
+
+class ElementNotFoundError(Exception):
+    """When element not found in DB"""
