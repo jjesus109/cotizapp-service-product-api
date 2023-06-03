@@ -57,11 +57,21 @@ class Gateway(GatewayInterface):
             response = await self.repository.create_product(product)
         return response
 
-    async def modify_service(self, service: ServiceUpdateModel) -> Any:
+    async def modify_service(
+        self,
+        service_id: str,
+        service: ServiceUpdateModel
+    ) -> Any:
         if self.conf.stream_consume:
-            response = await self.repository.notify_service_updated(service)
+            response = await self.repository.notify_service_updated(
+                service_id,
+                service
+            )
         else:
-            response = await self.repository.update_service(service)
+            response = await self.repository.update_service(
+                service_id,
+                service
+            )
         return response
 
     async def _map_response_to_model(

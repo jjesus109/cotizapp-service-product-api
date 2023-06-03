@@ -179,8 +179,25 @@ async def create_product(product: ProductModel):
 # reference:
 # https://fastapi.tiangolo.com/tutorial/body-updates/#using-pydantics-exclude_unset-parameter
 @app.patch("/api/v1/services/{service_id}")
-async def modify_service(service_id: int, service: ServiceUpdateModel):
-    pass
+async def modify_service(service_id: str, service: ServiceUpdateModel):
+    try:
+        service = await gateway.modify_service(service_id, service)
+    except ElementNotFoundError as e:
+        log.error(f"Could not update the service: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could update the service"
+        )
+    except Exception as e:
+        log.error(f"Could not update the service: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not update the service"
+        )
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED,
+        content=service
+    )
 
 
 if __name__ == "__main__":

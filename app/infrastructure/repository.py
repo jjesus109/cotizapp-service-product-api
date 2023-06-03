@@ -37,28 +37,24 @@ class Repository(RepositoryInterface):
     async def get_service_data(self, service_id: int) -> ServiceModel:
         try:
             service = await self.nosql_conn["services"].find(
-                {
-                    "_id": service_id
-                }
+                {"_id": service_id}
             ).to_list(self.config.max_search_elements)
         except (ConnectionFailure, ExecutionTimeout):
             raise ElementNotFoundError(
                 "Service not found in DB"
             )
-        return service
+        return service[0]
 
     async def get_product_data(self, product_id: int) -> Any:
         try:
-            service = await self.nosql_conn["products"].find(
-                {
-                    "_id": product_id
-                }
+            product = await self.nosql_conn["products"].find(
+                {"_id": product_id}
             ).to_list(self.config.max_search_elements)
         except (ConnectionFailure, ExecutionTimeout):
             raise ElementNotFoundError(
                 "Service not found in DB"
             )
-        return service
+        return product[0]
 
     async def search_products(
         self,
@@ -135,15 +131,28 @@ class Repository(RepositoryInterface):
             raise InsertionError("Could not insert product in DB")
         return product
 
-    async def update_service(self, service: Any) -> Any:
-        """Update service in DB
-
-        Args:
-            service (Any): service to update
-
-        Returns:
-            Any: Service updated
-        """
+    async def update_service(
+        self,
+        service_id: str,
+        service: ServiceUpdateModel
+    ) -> ServiceModel:
+        query = {"_id": service_id}
+        values = {
+            "$set": service.dict(exclude_unset=True)
+        }
+        try:
+            await self.nosql_conn["services"].update_one(query, values)
+        except (ConnectionFailure, ExecutionTimeout):
+            raise InsertionError("Could not update services in DB")
+        try:
+            service = await self.nosql_conn["services"].find(query).to_list(
+                self.config.max_search_elements
+            )
+        except (ConnectionFailure, ExecutionTimeout):
+            raise ElementNotFoundError(
+                "Service not found in DB"
+            )
+        return service[0]
 
     async def notify_service(self, service: ServiceModel) -> ServiceModel:
         json_data = json.dumps(service.json())

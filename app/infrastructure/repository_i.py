@@ -85,10 +85,11 @@ class RepositoryInterface(ABC):
         """
 
     @abstractmethod
-    async def update_service(self, service: Any) -> Any:
+    async def update_service(self, service_id: str, service: Any) -> Any:
         """Update service in DB
 
         Args:
+            service_id (str): service id to update data
             service (Any): service to update
 
         Returns:
@@ -106,11 +107,12 @@ class RepositoryInterface(ABC):
         """
 
     @abstractmethod
-    async def notify_service_updated(self, service: Any):
+    async def notify_service_updated(self, service_id: str, service: Any):
         """Notification about a updating in service changes in
         messaging system
 
         Args:
+            service_id (str): service id to update data
             service (Any): Service to notify in changes
 
         """

@@ -68,19 +68,18 @@ class GatewayInterface(ABC):
 
         Args:
             service (Any): service to create
-            strategy (Strategy): strategy to execute in updating
 
         Returns:
             Any: service created
         """
 
     @abstractmethod
-    async def modify_service(self, service: Any) -> Any:
+    async def modify_service(self, service_id: str, service: Any) -> Any:
         """Update an existing service
 
         Args:
+            service_id (str): service id to update
             service (Any): service to update
-            strategy (Strategy): strategy to execute in updating
 
         Returns:
             Any: Service modified
