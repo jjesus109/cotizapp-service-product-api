@@ -4,7 +4,12 @@ from app.config import Config
 from app.connections import create_connection, create_producer
 from app.infrastructure.repository import Repository
 from app.adapters.gateway import Gateway
-from app.entities.models import ServiceModel, ServiceUpdateModel
+from app.entities.models import (
+    ServiceModel,
+    ServiceUpdateModel,
+    ProductModel
+)
+
 from app.errors import ElementNotFoundError
 
 import uvicorn
@@ -83,6 +88,44 @@ async def search_service_by_description(service_description: str):
     return services
 
 
+@app.get("/api/v1/services/{service_id}")
+async def get_service(service_id: str):
+    try:
+        service = await gateway.get_service(service_id)
+    except ElementNotFoundError as e:
+        log.error(f"Could not find the service: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not find the service"
+        )
+    except Exception as e:
+        log.error(f"Could not find the service: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not find the service"
+        )
+    return service
+
+
+@app.get("/api/v1/products/{product_id}")
+async def get_product(product_id: str):
+    try:
+        product = await gateway.get_product(product_id)
+    except ElementNotFoundError as e:
+        log.error(f"Could not find the product: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not find the product"
+        )
+    except Exception as e:
+        log.error(f"Could not find the product: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not find the product"
+        )
+    return product
+
+
 @app.post(
         "/api/v1/services",
         response_description="Add new service",
@@ -105,6 +148,31 @@ async def create_service(service: ServiceModel):
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
         content=service
+    )
+
+
+@app.post(
+        "/api/v1/products",
+        response_description="Add new service",
+        response_model=ProductModel)
+async def create_product(product: ProductModel):
+    try:
+        product = await gateway.create_product(product)
+    except ElementNotFoundError as e:
+        log.error(f"Could not create the product: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could create the product"
+        )
+    except Exception as e:
+        log.error(f"Could not create the product: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not create the product"
+        )
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED,
+        content=product
     )
 
 

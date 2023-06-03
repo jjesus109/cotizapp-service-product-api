@@ -15,3 +15,4 @@ class Config(BaseSettings):
     sasl_username: str
     sasl_pass: str
     max_search_elements: int
+    kafka_topic: str

@@ -1,4 +1,5 @@
 import logging
+import json
 from typing import List, Any
 from dataclasses import dataclass
 
@@ -8,10 +9,12 @@ from app.entities.models import (
     ServiceModel,
     ServiceUpdateModel,
     ProductResponseSearchModel,
+    ProductModel
 )
 from app.infrastructure.repository_i import RepositoryInterface
 
 import requests
+from pydantic import BaseSettings
 from confluent_kafka import Producer
 from fastapi.encoders import jsonable_encoder
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -20,7 +23,7 @@ from pymongo.errors import (
     ExecutionTimeout
 )
 
-config = Config()
+
 log = logging.getLogger(__name__)
 
 
@@ -29,14 +32,15 @@ class Repository(RepositoryInterface):
 
     nosql_conn: AsyncIOMotorDatabase
     messaging_con: Producer
+    config: BaseSettings = Config()
 
     async def get_service_data(self, service_id: int) -> ServiceModel:
         try:
-            service = await self.nosql_conn.db["services"].find(
+            service = await self.nosql_conn["services"].find(
                 {
                     "_id": service_id
                 }
-            )
+            ).to_list(self.config.max_search_elements)
         except (ConnectionFailure, ExecutionTimeout):
             raise ElementNotFoundError(
                 "Service not found in DB"
@@ -45,11 +49,11 @@ class Repository(RepositoryInterface):
 
     async def get_product_data(self, product_id: int) -> Any:
         try:
-            service = await self.nosql_conn.db["products"].find(
+            service = await self.nosql_conn["products"].find(
                 {
                     "_id": product_id
                 }
-            )
+            ).to_list(self.config.max_search_elements)
         except (ConnectionFailure, ExecutionTimeout):
             raise ElementNotFoundError(
                 "Service not found in DB"
@@ -61,7 +65,7 @@ class Repository(RepositoryInterface):
         word: str
     ) -> List[ProductResponseSearchModel]:
         token = await self._get_token()
-        URL = f"{config.syscom_api_url}productos?busqueda={word}"
+        URL = f"{self.config.syscom_api_url}productos?busqueda={word}"
         autorization_header = {
             "Authorization": f"Bearer {token}"
         }
@@ -89,7 +93,7 @@ class Repository(RepositoryInterface):
                         "$options": "mxsi"
                     }
                 }
-            ).to_list(config.max_search_elements)
+            ).to_list(self.config.max_search_elements)
         except (ConnectionFailure, ExecutionTimeout):
             raise ElementNotFoundError(
                 "Could not found service in DB"
@@ -108,20 +112,28 @@ class Repository(RepositoryInterface):
                         "$options": "mxsi"
                     }
                 }
-            ).to_list(config.max_search_elements)
+            ).to_list(self.config.max_search_elements)
         except (ConnectionFailure, ExecutionTimeout):
             raise ElementNotFoundError(
                 "Could not found service in DB"
             )
         return services_get
 
-    async def create_service(self, service: ServiceModel) -> Any:
+    async def create_service(self, service: ServiceModel) -> ServiceModel:
         service = jsonable_encoder(service)
         try:
             await self.nosql_conn["services"].insert_one(service)
         except (ConnectionFailure, ExecutionTimeout):
             raise InsertionError("Could not insert service in DB")
         return service
+
+    async def create_product(self, product: ProductModel) -> ProductModel:
+        product = jsonable_encoder(product)
+        try:
+            await self.nosql_conn["products"].insert_one(product)
+        except (ConnectionFailure, ExecutionTimeout):
+            raise InsertionError("Could not insert product in DB")
+        return product
 
     async def update_service(self, service: Any) -> Any:
         """Update service in DB
@@ -133,23 +145,23 @@ class Repository(RepositoryInterface):
             Any: Service updated
         """
 
-    async def notify_service(self, service: ServiceModel):
-        """Notification about a service changes in
-        messaging system
+    async def notify_service(self, service: ServiceModel) -> ServiceModel:
+        json_data = json.dumps(service.json())
+        self.messaging_con.produce(
+            self.config.kafka_topic,
+            json_data.encode("utf-8")
+        )
+        self.messaging_con.flush()
+        return service
 
-        Args:
-            service (Any): Service to notify
-
-        """
-
-    async def notify_product(self, product: Any):
-        """Notification about a product changes in
-        messaging system
-
-        Args:
-            product (Any): Product to notify
-
-        """
+    async def notify_product(self, product: ProductModel) -> ProductModel:
+        json_data = json.dumps(product.json())
+        self.messaging_con.produce(
+            self.config.kafka_topic,
+            json_data.encode("utf-8")
+        )
+        self.messaging_con.flush()
+        return product
 
     async def notify_service_updated(self, service: ServiceUpdateModel):
         """Notification about a updating in service changes in
@@ -164,10 +176,10 @@ class Repository(RepositoryInterface):
         headers = {
             "Content-Type": "application/x-www-form-urlencoded"
         }
-        data = f"client_id={config.client_id}&client_secret={config.client_secret}&grant_type=client_credentials"  # noqa
+        data = f"client_id={self.config.client_id}&client_secret={self.config.client_secret}&grant_type=client_credentials"  # noqa
         try:
             response = requests.post(
-                config.syscom_token_url,
+                self.config.syscom_token_url,
                 headers=headers,
                 data=data
             )

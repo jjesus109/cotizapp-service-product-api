@@ -74,6 +74,17 @@ class RepositoryInterface(ABC):
         """
 
     @abstractmethod
+    async def create_product(self, product: Any) -> Any:
+        """Create a product in DB
+
+        Args:
+            product (Any): product to insert
+
+        Returns:
+            Any: product created
+        """
+
+    @abstractmethod
     async def update_service(self, service: Any) -> Any:
         """Update service in DB
 

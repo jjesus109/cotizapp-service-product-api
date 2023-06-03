@@ -85,3 +85,14 @@ class GatewayInterface(ABC):
         Returns:
             Any: Service modified
         """
+
+    @abstractmethod
+    async def create_product(self, product: Any) -> Any:
+        """Create a product in DB
+
+        Args:
+            product (Any): product to insert
+
+        Returns:
+            Any: product created
+        """
