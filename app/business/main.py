@@ -10,7 +10,7 @@ from app.entities.models import (
     ProductModel
 )
 
-from app.errors import ElementNotFoundError
+from app.errors import ElementNotFoundError, DBConnectionError
 
 import uvicorn
 from fastapi.responses import JSONResponse
@@ -33,7 +33,7 @@ gateway = Gateway(
 async def search_product(product_name: str):
     try:
         products = await gateway.search_product(product_name)
-    except ElementNotFoundError as e:
+    except (ElementNotFoundError, DBConnectionError) as e:
         log.error(f"Could not get data from third party endpoint: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -52,7 +52,7 @@ async def search_product(product_name: str):
 async def search_service_by_name(service_name: str):
     try:
         services = await gateway.search_services_by_name(service_name)
-    except ElementNotFoundError as e:
+    except (ElementNotFoundError, DBConnectionError) as e:
         log.error(f"Could not find the service: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -73,7 +73,7 @@ async def search_service_by_description(service_description: str):
         services = await gateway.search_services_by_description(
             service_description
         )
-    except ElementNotFoundError as e:
+    except (ElementNotFoundError, DBConnectionError) as e:
         log.error(f"Could not find the service: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -92,7 +92,7 @@ async def search_service_by_description(service_description: str):
 async def get_service(service_id: str):
     try:
         service = await gateway.get_service(service_id)
-    except ElementNotFoundError as e:
+    except (ElementNotFoundError, DBConnectionError) as e:
         log.error(f"Could not find the service: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -111,7 +111,7 @@ async def get_service(service_id: str):
 async def get_product(product_id: str):
     try:
         product = await gateway.get_product(product_id)
-    except ElementNotFoundError as e:
+    except (ElementNotFoundError, DBConnectionError) as e:
         log.error(f"Could not find the product: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -133,7 +133,7 @@ async def get_product(product_id: str):
 async def create_service(service: ServiceModel):
     try:
         service = await gateway.create_service(service)
-    except ElementNotFoundError as e:
+    except (ElementNotFoundError, DBConnectionError) as e:
         log.error(f"Could not create the service: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -158,7 +158,7 @@ async def create_service(service: ServiceModel):
 async def create_product(product: ProductModel):
     try:
         product = await gateway.create_product(product)
-    except ElementNotFoundError as e:
+    except (ElementNotFoundError, DBConnectionError) as e:
         log.error(f"Could not create the product: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -180,7 +180,7 @@ async def create_product(product: ProductModel):
 async def modify_service(service_id: str, service: ServiceUpdateModel):
     try:
         service = await gateway.modify_service(service_id, service)
-    except ElementNotFoundError as e:
+    except (ElementNotFoundError, DBConnectionError) as e:
         log.error(f"Could not update the service: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

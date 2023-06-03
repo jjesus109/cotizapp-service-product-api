@@ -49,14 +49,16 @@ class Gateway(GatewayInterface):
 
     async def create_service(self, service: ServiceModel) -> ServiceDictModel:
         if self.conf.stream_consume:
-            response = await self.repository.notify(service)
+            await self.repository.notify(service)
+            response = jsonable_encoder(service)
         else:
             response = await self.repository.create_service(service)
         return response
 
     async def create_product(self, product: Any) -> ProducDictModel:
         if self.conf.stream_consume:
-            response = await self.repository.notify(product)
+            await self.repository.notify(product)
+            response = jsonable_encoder(product)
         else:
             response = await self.repository.create_product(product)
         return response

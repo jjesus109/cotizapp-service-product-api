@@ -3,7 +3,12 @@ from typing import List, Union
 from dataclasses import dataclass
 
 from app.config import Config
-from app.errors import ElementNotFoundError, TokenError, InsertionError
+from app.errors import (
+    ElementNotFoundError,
+    TokenError,
+    InsertionError,
+    DBConnectionError
+)
 from app.entities.models import (
     ServiceModel,
     ServiceUpdateModel,
@@ -26,6 +31,7 @@ from pymongo.errors import (
 
 
 log = logging.getLogger(__name__)
+EMPTY_COUNT = 0
 
 
 @dataclass
@@ -41,6 +47,10 @@ class Repository(RepositoryInterface):
                 {"_id": service_id}
             ).to_list(self.config.max_search_elements)
         except (ConnectionFailure, ExecutionTimeout):
+            raise DBConnectionError(
+                "Service not found in DB"
+            )
+        if service.__len__() == EMPTY_COUNT:
             raise ElementNotFoundError(
                 "Service not found in DB"
             )
@@ -51,7 +61,11 @@ class Repository(RepositoryInterface):
             product = await self.nosql_conn["products"].find(
                 {"_id": product_id}
             ).to_list(self.config.max_search_elements)
-        except (ConnectionFailure, ExecutionTimeout):
+        except (DBConnectionError, ExecutionTimeout):
+            raise ElementNotFoundError(
+                "Service not found in DB"
+            )
+        if product.__len__() == EMPTY_COUNT:
             raise ElementNotFoundError(
                 "Service not found in DB"
             )
@@ -92,7 +106,7 @@ class Repository(RepositoryInterface):
                 }
             ).to_list(self.config.max_search_elements)
         except (ConnectionFailure, ExecutionTimeout):
-            raise ElementNotFoundError(
+            raise DBConnectionError(
                 "Could not found service in DB"
             )
         return services_get
@@ -111,7 +125,7 @@ class Repository(RepositoryInterface):
                 }
             ).to_list(self.config.max_search_elements)
         except (ConnectionFailure, ExecutionTimeout):
-            raise ElementNotFoundError(
+            raise DBConnectionError(
                 "Could not found service in DB"
             )
         return services_get
