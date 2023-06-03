@@ -30,7 +30,7 @@ def create_producer() -> Producer:
         "bootstrap.servers": conf.kafka_server,
         "security.protocol": conf.kafka_protocol,
         "sasl.mechanisms": conf.sasl_mechanism,
-        "sasl.username": conf.sasl_pass,
-        "sasl.password": conf.sasl_username,
+        "sasl.username": conf.sasl_username,
+        "sasl.password": conf.sasl_pass,
     }
     return Producer(kafka_conf)

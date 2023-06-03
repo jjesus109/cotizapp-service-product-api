@@ -1,6 +1,5 @@
 import logging
-import json
-from typing import List, Any, Union
+from typing import List, Union
 from dataclasses import dataclass
 
 from app.config import Config
@@ -9,7 +8,9 @@ from app.entities.models import (
     ServiceModel,
     ServiceUpdateModel,
     ProductResponseSearchModel,
-    ProductModel
+    ProductModel,
+    ProducDictModel,
+    ServiceDictModel
 )
 from app.infrastructure.repository_i import RepositoryInterface
 
@@ -34,7 +35,7 @@ class Repository(RepositoryInterface):
     messaging_con: Producer
     config: BaseSettings = Config()
 
-    async def get_service_data(self, service_id: int) -> ServiceModel:
+    async def get_service_data(self, service_id: int) -> ServiceDictModel:
         try:
             service = await self.nosql_conn["services"].find(
                 {"_id": service_id}
@@ -45,7 +46,7 @@ class Repository(RepositoryInterface):
             )
         return service[0]
 
-    async def get_product_data(self, product_id: int) -> Any:
+    async def get_product_data(self, product_id: int) -> ProducDictModel:
         try:
             product = await self.nosql_conn["products"].find(
                 {"_id": product_id}
@@ -80,7 +81,7 @@ class Repository(RepositoryInterface):
     async def search_services_by_name(
         self,
         service_name: str
-    ) -> List[ServiceModel]:
+    ) -> List[ServiceDictModel]:
         try:
             services_get = await self.nosql_conn["services"].find(
                 {
@@ -99,7 +100,7 @@ class Repository(RepositoryInterface):
     async def search_services_by_description(
         self,
         service_description: str
-    ) -> List[ServiceModel]:
+    ) -> List[ServiceDictModel]:
         try:
             services_get = await self.nosql_conn["services"].find(
                 {
@@ -115,7 +116,7 @@ class Repository(RepositoryInterface):
             )
         return services_get
 
-    async def create_service(self, service: ServiceModel) -> ServiceModel:
+    async def create_service(self, service: ServiceModel) -> ServiceDictModel:
         service = jsonable_encoder(service)
         try:
             await self.nosql_conn["services"].insert_one(service)
@@ -123,7 +124,7 @@ class Repository(RepositoryInterface):
             raise InsertionError("Could not insert service in DB")
         return service
 
-    async def create_product(self, product: ProductModel) -> ProductModel:
+    async def create_product(self, product: ProductModel) -> ProducDictModel:
         product = jsonable_encoder(product)
         try:
             await self.nosql_conn["products"].insert_one(product)
@@ -148,14 +149,12 @@ class Repository(RepositoryInterface):
     async def notify(
         self,
         service: Union[ServiceModel, ProductModel]
-    ) -> ServiceModel:
-        json_data = json.dumps(service.json())
+    ):
         self.messaging_con.produce(
             self.config.kafka_topic,
-            json_data.encode("utf-8")
+            service.json().encode("utf-8")
         )
         self.messaging_con.flush()
-        return service
 
     async def _get_token(self) -> str:
         headers = {

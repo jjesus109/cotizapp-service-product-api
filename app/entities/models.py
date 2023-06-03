@@ -60,6 +60,14 @@ class ServiceUpdateModel(BaseModel):
         }
 
 
+class ServiceDictModel(TypedDict):
+    _id: str
+    name: str
+    description: str
+    client_price: float
+    real_price: float
+
+
 class ProductModel(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     title: str
@@ -77,6 +85,20 @@ class ProductModel(BaseModel):
         allow_population_by_field_name = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+
+
+class ProducDictModel(BaseModel):
+    _id: str
+    title: str
+    list_price: float
+    discount_price: float
+    image: str
+    stock_number: int
+    brand: str
+    product_id: int
+    model: str
+    sat_key: int
+    weight: float
 
 
 class ExistenceModel(TypedDict):

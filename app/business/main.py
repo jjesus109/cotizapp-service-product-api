@@ -176,8 +176,6 @@ async def create_product(product: ProductModel):
     )
 
 
-# reference:
-# https://fastapi.tiangolo.com/tutorial/body-updates/#using-pydantics-exclude_unset-parameter
 @app.patch("/api/v1/services/{service_id}")
 async def modify_service(service_id: str, service: ServiceUpdateModel):
     try:
