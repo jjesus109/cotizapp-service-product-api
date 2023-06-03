@@ -45,14 +45,14 @@ class Gateway(GatewayInterface):
 
     async def create_service(self, service: ServiceModel) -> Any:
         if self.conf.stream_consume:
-            response = await self.repository.notify_service(service)
+            response = await self.repository.notify(service)
         else:
             response = await self.repository.create_service(service)
         return response
 
     async def create_product(self, product: Any) -> Any:
         if self.conf.stream_consume:
-            response = await self.repository.notify_product(product)
+            response = await self.repository.notify(product)
         else:
             response = await self.repository.create_product(product)
         return response
@@ -63,15 +63,20 @@ class Gateway(GatewayInterface):
         service: ServiceUpdateModel
     ) -> Any:
         if self.conf.stream_consume:
-            response = await self.repository.notify_service_updated(
+            service_got = await self.repository.get_service_data(service_id)
+            service_model = ServiceModel(**service_got)
+            new_service_data = service.dict(exclude_unset=True)
+            updated_service = service_model.copy(update=new_service_data)
+            response = await self.repository.notify(
                 service_id,
-                service
+                updated_service
             )
         else:
-            response = await self.repository.update_service(
+            await self.repository.update_service(
                 service_id,
                 service
             )
+            response = await self.repository.get_service_data(service_id)
         return response
 
     async def _map_response_to_model(

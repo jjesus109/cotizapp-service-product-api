@@ -97,32 +97,11 @@ class RepositoryInterface(ABC):
         """
 
     @abstractmethod
-    async def notify_service(self, service: Any):
-        """Notification about a service changes in
+    async def notify(self, service_product: Any):
+        """Notification about a service or product changes in
         messaging system
 
         Args:
-            service (Any): Service to notify
-
-        """
-
-    @abstractmethod
-    async def notify_service_updated(self, service_id: str, service: Any):
-        """Notification about a updating in service changes in
-        messaging system
-
-        Args:
-            service_id (str): service id to update data
-            service (Any): Service to notify in changes
-
-        """
-
-    @abstractmethod
-    async def notify_product(self, product: Any):
-        """Notification about a product changes in
-        messaging system
-
-        Args:
-            product (Any): Product to notify
+            service_product (Any): Service or product to notify
 
         """

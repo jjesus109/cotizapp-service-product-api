@@ -1,6 +1,6 @@
 import logging
 import json
-from typing import List, Any
+from typing import List, Any, Union
 from dataclasses import dataclass
 
 from app.config import Config
@@ -135,7 +135,7 @@ class Repository(RepositoryInterface):
         self,
         service_id: str,
         service: ServiceUpdateModel
-    ) -> ServiceModel:
+    ):
         query = {"_id": service_id}
         values = {
             "$set": service.dict(exclude_unset=True)
@@ -144,17 +144,11 @@ class Repository(RepositoryInterface):
             await self.nosql_conn["services"].update_one(query, values)
         except (ConnectionFailure, ExecutionTimeout):
             raise InsertionError("Could not update services in DB")
-        try:
-            service = await self.nosql_conn["services"].find(query).to_list(
-                self.config.max_search_elements
-            )
-        except (ConnectionFailure, ExecutionTimeout):
-            raise ElementNotFoundError(
-                "Service not found in DB"
-            )
-        return service[0]
 
-    async def notify_service(self, service: ServiceModel) -> ServiceModel:
+    async def notify(
+        self,
+        service: Union[ServiceModel, ProductModel]
+    ) -> ServiceModel:
         json_data = json.dumps(service.json())
         self.messaging_con.produce(
             self.config.kafka_topic,
@@ -162,24 +156,6 @@ class Repository(RepositoryInterface):
         )
         self.messaging_con.flush()
         return service
-
-    async def notify_product(self, product: ProductModel) -> ProductModel:
-        json_data = json.dumps(product.json())
-        self.messaging_con.produce(
-            self.config.kafka_topic,
-            json_data.encode("utf-8")
-        )
-        self.messaging_con.flush()
-        return product
-
-    async def notify_service_updated(self, service: ServiceUpdateModel):
-        """Notification about a updating in service changes in
-        messaging system
-
-        Args:
-            service (Any): Service to notify in changes
-
-        """
 
     async def _get_token(self) -> str:
         headers = {
