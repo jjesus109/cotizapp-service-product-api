@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, List
 from abc import ABC, abstractmethod
 
@@ -97,7 +98,7 @@ class RepositoryInterface(ABC):
         """
 
     @abstractmethod
-    async def notify(self, service_product: Any):
+    async def notify(self, service_product: Any, _type: Enum):
         """Notification about a service or product changes in
         messaging system
 

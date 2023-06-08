@@ -1,4 +1,5 @@
-from typing import Optional, TypedDict
+from enum import Enum
+from typing import Optional, TypedDict, Union
 
 from pydantic import BaseModel, Field
 from bson import ObjectId
@@ -136,3 +137,13 @@ class ProductResponseSearchModel(TypedDict):
     precios: PreciosModel
     pagina: int
     paginas: int
+
+
+class MessageType(Enum):
+    service = "Service"
+    product = "Product"
+
+
+class MessageFormat(BaseModel):
+    type: str
+    content: Union[ServiceModel, ProductModel]

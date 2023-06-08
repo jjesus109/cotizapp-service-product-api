@@ -15,7 +15,9 @@ from app.entities.models import (
     ProductResponseSearchModel,
     ProductModel,
     ProducDictModel,
-    ServiceDictModel
+    ServiceDictModel,
+    MessageFormat,
+    MessageType
 )
 from app.infrastructure.repository_i import RepositoryInterface
 
@@ -162,11 +164,15 @@ class Repository(RepositoryInterface):
 
     async def notify(
         self,
-        service: Union[ServiceModel, ProductModel]
+        service_product: Union[ServiceModel, ProductModel],
+        _type: MessageType
     ):
+        message = MessageFormat(
+            type=_type.value,
+            content=service_product)
         self.messaging_con.produce(
             self.config.kafka_topic,
-            service.json().encode("utf-8")
+            message.json(encoder=str).encode("utf-8")
         )
         self.messaging_con.flush()
 

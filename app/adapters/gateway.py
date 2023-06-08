@@ -7,7 +7,8 @@ from app.entities.models import (
     ProductModel,
     ProductResponseSearchModel,
     ServiceDictModel,
-    ProducDictModel
+    ProducDictModel,
+    MessageType
 )
 from app.config import Config
 from app.adapters.gateway_i import GatewayInterface
@@ -49,7 +50,8 @@ class Gateway(GatewayInterface):
 
     async def create_service(self, service: ServiceModel) -> ServiceDictModel:
         if self.conf.stream_consume:
-            await self.repository.notify(service)
+            service_type = MessageType.service
+            await self.repository.notify(service, service_type)
             response = jsonable_encoder(service)
         else:
             response = await self.repository.create_service(service)
@@ -57,7 +59,8 @@ class Gateway(GatewayInterface):
 
     async def create_product(self, product: Any) -> ProducDictModel:
         if self.conf.stream_consume:
-            await self.repository.notify(product)
+            product_type = MessageType.product
+            await self.repository.notify(product, product_type)
             response = jsonable_encoder(product)
         else:
             response = await self.repository.create_product(product)
@@ -73,8 +76,10 @@ class Gateway(GatewayInterface):
             service_model = ServiceModel(**service_got)
             new_service_data = service.dict(exclude_unset=True)
             updated_service = service_model.copy(update=new_service_data)
+            service_type = MessageType.service
             await self.repository.notify(
-                updated_service
+                updated_service,
+                service_type
             )
             updated_service = jsonable_encoder(updated_service)
         else:
