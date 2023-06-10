@@ -45,9 +45,9 @@ class Repository(RepositoryInterface):
 
     async def get_service_data(self, service_id: int) -> ServiceDictModel:
         try:
-            service = await self.nosql_conn["services"].find(
+            service = await self.nosql_conn[self.config.services_collec].find_one(  # noqa
                 {"_id": service_id}
-            ).to_list(self.config.max_search_elements)
+            )
         except (ConnectionFailure, ExecutionTimeout):
             raise DBConnectionError(
                 "Service not found in DB"
@@ -56,20 +56,20 @@ class Repository(RepositoryInterface):
             raise ElementNotFoundError(
                 "Service not found in DB"
             )
-        return service[0]
+        return service
 
     async def get_product_data(self, product_id: int) -> ProducDictModel:
         try:
-            product = await self.nosql_conn["products"].find(
+            product = await self.nosql_conn[self.config.products_collec].find_one(  # noqa
                 {"_id": product_id}
-            ).to_list(self.config.max_search_elements)
+            )
         except (DBConnectionError, ExecutionTimeout):
             raise ElementNotFoundError(
-                "Service not found in DB"
+                "Product not found in DB"
             )
         if product.__len__() == EMPTY_COUNT:
             raise ElementNotFoundError(
-                "Service not found in DB"
+                "Product not found in DB"
             )
         return product[0]
 
@@ -99,7 +99,7 @@ class Repository(RepositoryInterface):
         service_name: str
     ) -> List[ServiceDictModel]:
         try:
-            services_get = await self.nosql_conn["services"].find(
+            services_get = await self.nosql_conn[self.config.services_collec].find(  # noqa
                 {
                     "name": {
                         "$regex": service_name,
@@ -118,7 +118,7 @@ class Repository(RepositoryInterface):
         service_description: str
     ) -> List[ServiceDictModel]:
         try:
-            services_get = await self.nosql_conn["services"].find(
+            services_get = await self.nosql_conn[self.config.services_collec].find(  # noqa
                 {
                     "description": {
                         "$regex": service_description,
@@ -135,7 +135,9 @@ class Repository(RepositoryInterface):
     async def create_service(self, service: ServiceModel) -> ServiceDictModel:
         service = jsonable_encoder(service)
         try:
-            await self.nosql_conn["services"].insert_one(service)
+            await self.nosql_conn[self.config.services_collec].insert_one(
+                service
+            )
         except (ConnectionFailure, ExecutionTimeout):
             raise InsertionError("Could not insert service in DB")
         return service
@@ -143,7 +145,9 @@ class Repository(RepositoryInterface):
     async def create_product(self, product: ProductModel) -> ProducDictModel:
         product = jsonable_encoder(product)
         try:
-            await self.nosql_conn["products"].insert_one(product)
+            await self.nosql_conn[self.config.products_collec].insert_one(
+                product
+            )
         except (ConnectionFailure, ExecutionTimeout):
             raise InsertionError("Could not insert product in DB")
         return product
@@ -158,7 +162,10 @@ class Repository(RepositoryInterface):
             "$set": service.dict(exclude_unset=True)
         }
         try:
-            await self.nosql_conn["services"].update_one(query, values)
+            await self.nosql_conn[self.config.services_collec].update_one(
+                query,
+                values
+            )
         except (ConnectionFailure, ExecutionTimeout):
             raise InsertionError("Could not update services in DB")
 
