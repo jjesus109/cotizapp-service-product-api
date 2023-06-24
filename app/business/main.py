@@ -1,3 +1,4 @@
+from typing import List
 import logging
 
 from app.config import Config
@@ -14,7 +15,7 @@ from app.errors import ElementNotFoundError, DBConnectionError
 
 import uvicorn
 from fastapi.responses import JSONResponse
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Response
 
 conf = Config()
 app = FastAPI()
@@ -29,7 +30,7 @@ gateway = Gateway(
 )
 
 
-@app.get("/api/v1/products")
+@app.get("/api/v1/products", response_model=List[ProductModel])
 async def search_product(product_name: str):
     try:
         products = await gateway.search_product(product_name)
@@ -48,7 +49,7 @@ async def search_product(product_name: str):
     return products
 
 
-@app.get("/api/v1/services")
+@app.get("/api/v1/services", response_model=List[ServiceModel])
 async def search_service_by_name(service_name: str):
     try:
         services = await gateway.search_services_by_name(service_name)
@@ -67,7 +68,7 @@ async def search_service_by_name(service_name: str):
     return services
 
 
-@app.get("/api/v1/services/description")
+@app.get("/api/v1/services/description", response_model=List[ServiceModel])
 async def search_service_by_description(service_description: str):
     try:
         services = await gateway.search_services_by_description(
@@ -88,7 +89,7 @@ async def search_service_by_description(service_description: str):
     return services
 
 
-@app.get("/api/v1/services/{service_id}")
+@app.get("/api/v1/services/{service_id}", response_model=ServiceModel)
 async def get_service(service_id: str):
     try:
         service = await gateway.get_service(service_id)
@@ -107,7 +108,7 @@ async def get_service(service_id: str):
     return service
 
 
-@app.get("/api/v1/products/{product_id}")
+@app.get("/api/v1/products/{product_id}", response_model=ProductModel)
 async def get_product(product_id: str):
     try:
         product = await gateway.get_product(product_id)
@@ -192,11 +193,8 @@ async def modify_service(service_id: str, service: ServiceUpdateModel):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Could not update the service"
         )
-    return JSONResponse(
-        status_code=status.HTTP_201_CREATED,
-        content=service
-    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", port=5000, log_level="info")
+    uvicorn.run("main:app", port=5050, log_level="info")
